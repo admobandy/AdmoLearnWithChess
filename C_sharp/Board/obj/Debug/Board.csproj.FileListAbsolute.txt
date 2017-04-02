@@ -1,0 +1,8 @@
+H:\Visual Studio 2008\Projects\Board\Board\bin\Debug\Board.exe
+H:\Visual Studio 2008\Projects\Board\Board\bin\Debug\Board.pdb
+H:\Visual Studio 2008\Projects\Board\Board\obj\Debug\ResolveAssemblyReference.cache
+H:\Visual Studio 2008\Projects\Board\Board\obj\Debug\Board.Properties.Resources.resources
+H:\Visual Studio 2008\Projects\Board\Board\obj\Debug\Board.csproj.GenerateResource.Cache
+H:\Visual Studio 2008\Projects\Board\Board\obj\Debug\Board.exe
+H:\Visual Studio 2008\Projects\Board\Board\obj\Debug\Board.pdb
+H:\Visual Studio 2008\Projects\Board\Board\obj\Debug\Board.boardWindow.resources
