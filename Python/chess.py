@@ -1,7 +1,7 @@
 import os
 import re
-import Tkinter
-from Tkinter import *
+import tkinter
+from tkinter import *
 from board import Board
 from piece import Piece
 from PIL import ImageTk, Image
@@ -39,7 +39,7 @@ class Game(object):
             if source.piece.color is not "black" and source.piece.name() is not ' ':
                 black_valid = self.move(square, black_king_square, checking_for_check=True)
                 if black_valid:
-                    print "Black in check from %s" % square
+                    print("Black in check from %s" % square)
                     self.player2.in_check = True
                     self.board.text_to_square(black_king_square).piece.in_check = True
                     return True
@@ -51,7 +51,7 @@ class Game(object):
             if source.piece.color is not "white" and source.piece.name() is not ' ':
                 white_valid = self.move(square, white_king_square, checking_for_check=True)
                 if white_valid:
-                    print "White in check from %s" % square
+                    print("White in check from %s" % square)
                     self.player1.in_check = True
                     self.board.text_to_square(white_king_square).piece.in_check = True
                     return True
@@ -70,7 +70,7 @@ class Game(object):
         for square in self.all_squares():
             self.try_move(square)
 
-        print ("Black in Check:%s White in Check:%s" % (self.player2.in_check, self.player1.in_check))
+        print("Black in Check:%s White in Check:%s" % (self.player2.in_check, self.player1.in_check))
 
     def move(self, source_square, destination_square, checking_for_check=False):
         assert source_square != destination_square
@@ -86,9 +86,9 @@ class Game(object):
         assert piece_color != destination.piece.color
         assert source.piece.valid_move(source_square, destination_square, self.board, self, checking_for_check)
         path = self.board.path(source_square, destination_square)
-        print "%s %s\n%s\n%s" % (source_square, destination_square, self.board, map(lambda x: x.coords, path))
-        print "Black king: %s White King: %s" % (self.board.black_king, self.board.white_king)
-        print "%s" % piece_name
+        print("%s %s\n%s\n%s" % (source_square, destination_square, self.board, map(lambda x: x.coords, path)))
+        print("Black king: %s White King: %s" % (self.board.black_king, self.board.white_king))
+        print("%s" % piece_name)
 
         if piece_name != "knight" and len(path) > 2 and piece_name != "king":
             for square in path[1:-1]:
@@ -134,7 +134,7 @@ class Game(object):
         elif source_square == "h8":
             self.board.h8_has_moved = True
 
-        print "It's %s's turn" % self.turn.color
+        print("It's %s's turn" % self.turn.color)
         return
 
 
@@ -163,7 +163,7 @@ class GameLoop(object):
             destination = self.game.board.convert_point_to_square(event.x, event.y)
             try:
                 self.game.move(source.coords, destination.coords)
-                print "%s %s" % (source.coords, destination.coords)
+                print("%s %s" % (source.coords, destination.coords))
                 frame = self.get_frame()
                 self.panel.configure(image = frame)
                 self.panel.image = frame
@@ -183,7 +183,7 @@ class GameLoop(object):
         self.window.geometry("768x768")
         self.window.configure(background='grey')
         frame = self.get_frame()
-        self.panel = Tkinter.Label(self.window, image = frame)
+        self.panel = tkinter.Label(self.window, image = frame)
         self.panel.bind('<Button-1>', self.click_event)
         self.panel.pack(side = "bottom", fill = "both", expand = "yes")
         self.window.mainloop()

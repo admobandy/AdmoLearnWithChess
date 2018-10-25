@@ -257,8 +257,8 @@ class Board(object):
             return "h"
 
     def __str__(self):
-	state = "\n8[%s][%s][%s][%s][%s][%s][%s][%s]\n" % (self.a8, self.b8, self.c8, self.d8, self.e8, self.f8, self.g8, self.h8)
-	state = state + "7[%s][%s][%s][%s][%s][%s][%s][%s]\n" % (self.a7, self.b7, self.c7, self.d7, self.e7, self.f7, self.g7, self.h7)
+        state = "\n8[%s][%s][%s][%s][%s][%s][%s][%s]\n" % (self.a8, self.b8, self.c8, self.d8, self.e8, self.f8, self.g8, self.h8)
+        state = state + "7[%s][%s][%s][%s][%s][%s][%s][%s]\n" % (self.a7, self.b7, self.c7, self.d7, self.e7, self.f7, self.g7, self.h7)
         state = state + "6[%s][%s][%s][%s][%s][%s][%s][%s]\n" % (self.a6, self.b6, self.c6, self.d6, self.e6, self.f6, self.g6, self.h6)
         state = state + "5[%s][%s][%s][%s][%s][%s][%s][%s]\n" % (self.a5, self.b5, self.c5, self.d5, self.e5, self.f5, self.g5, self.h5)
         state = state + "4[%s][%s][%s][%s][%s][%s][%s][%s]\n" % (self.a4, self.b4, self.c4, self.d4, self.e4, self.f4, self.g4, self.h4)
