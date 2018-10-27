@@ -153,12 +153,18 @@ class GameLoop(object):
         return ImageTk.PhotoImage(img)
 
     def click_event(self, event):
+        self.window.title("Chess")
         if self.first_click:
             self.first_click_x = event.x
             self.first_click_y = event.y
-            square = self.game.board.convert_point_to_square(self.first_click_x, self.first_click_y) 
-            square.piece.image = ImageOps.crop(square.piece.image, border=3)
-            square.piece.image = ImageOps.expand(square.piece.image, border=3, fill='indianred')
+            try:
+                square = self.game.board.convert_point_to_square(self.first_click_x, self.first_click_y) 
+                square.piece.image = ImageOps.crop(square.piece.image, border=3)
+                square.piece.image = ImageOps.expand(square.piece.image, border=3, fill='indianred')
+            except AttributeError:
+                square.piece.image = square.piece.get_image()
+                self.window.title("Chess")
+
             self.first_click = False
             frame = self.get_frame()
             self.panel.configure(image = frame)
@@ -169,14 +175,15 @@ class GameLoop(object):
             try:
                 self.game.move(source.coords, destination.coords)
                 print("%s %s" % (source.coords, destination.coords))
-                frame = self.get_frame()
-                self.panel.configure(image = frame)
-                self.panel.image = frame
             except AssertionError:
+                self.window.title("Chess - Invalid Move")
                 pass
             except AttributeError:
                 pass
             finally:
+                frame = self.get_frame()
+                self.panel.configure(image = frame)
+                self.panel.image = frame
                 source.piece.image = source.piece.get_image()
                 destination.piece.image = destination.piece.get_image()
                 self.first_click = True
