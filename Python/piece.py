@@ -5,6 +5,7 @@ class Piece(object):
 
     def __init__(self, color=" "):
         self.color = color
+        self.image = self.get_image()
 
     def get_image(self):
         try:

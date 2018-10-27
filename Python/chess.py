@@ -1,10 +1,10 @@
+import cv2
 import os
 import re
-import tkinter
-from tkinter import *
+from tkinter import Label, Tk
 from board import Board
 from piece import Piece
-from PIL import ImageTk, Image
+from PIL import ImageTk, Image, ImageOps
 
 
 class Player(object):
@@ -145,7 +145,7 @@ class GameLoop(object):
         img = Image.open(board_path)
         for coords in self.game.all_squares():
             square = self.game.board.text_to_square(coords)
-            image = square.piece.get_image()
+            image = square.piece.image
             point = self.game.board.convert_square_to_point(square)
             if image is not None:
                 img.paste(image, point, image)
@@ -156,9 +156,14 @@ class GameLoop(object):
         if self.first_click:
             self.first_click_x = event.x
             self.first_click_y = event.y
+            square = self.game.board.convert_point_to_square(self.first_click_x, self.first_click_y) 
+            square.piece.image = ImageOps.crop(square.piece.image, border=3)
+            square.piece.image = ImageOps.expand(square.piece.image, border=3, fill='indianred')
             self.first_click = False
+            frame = self.get_frame()
+            self.panel.configure(image = frame)
+            self.panel.image = frame
         else:
-            self.first_click = True
             source = self.game.board.convert_point_to_square(self.first_click_x, self.first_click_y)
             destination = self.game.board.convert_point_to_square(event.x, event.y)
             try:
@@ -171,6 +176,10 @@ class GameLoop(object):
                 pass
             except AttributeError:
                 pass
+            finally:
+                source.piece.image = source.piece.get_image()
+                destination.piece.image = destination.piece.get_image()
+                self.first_click = True
 
     def __init__(self):
         os.system('clear')
@@ -183,7 +192,7 @@ class GameLoop(object):
         self.window.geometry("768x768")
         self.window.configure(background='grey')
         frame = self.get_frame()
-        self.panel = tkinter.Label(self.window, image = frame)
+        self.panel = Label(self.window, image = frame)
         self.panel.bind('<Button-1>', self.click_event)
         self.panel.pack(side = "bottom", fill = "both", expand = "yes")
         self.window.mainloop()
