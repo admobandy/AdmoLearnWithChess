@@ -79,9 +79,12 @@ class Game(object):
         self.player1.in_check = False
         self.player2.in_check = False
         for square in self.all_squares():
-            self.try_move(square)
+            in_check = self.try_move(square)
+            if in_check:
+                raise InvalidMoveException("Move causes king to be in or move through check")
 
         logging.info("Black in Check:%s White in Check:%s" % (self.player2.in_check, self.player1.in_check))
+        logging.info("#######################################")
 
     def move(self, source_square, destination_square, checking_for_check=False):
         if source_square == destination_square:
@@ -110,7 +113,7 @@ class Game(object):
         path = self.board.path(source_square, destination_square)
         logging.info("%s %s\n%s\n%s" % (source_square, destination_square, self.board, map(lambda x: x.coords, path)))
         logging.info("Black king: %s White King: %s" % (self.board.black_king, self.board.white_king))
-        logging.info("%s" % piece_name)
+        logging.info("Source piece is: %s" % piece_name)
 
         if piece_name != "knight" and len(path) > 2 and piece_name != "king":
             for square in path[1:-1]:
@@ -157,9 +160,6 @@ class Game(object):
         elif source_square == "h8":
             self.board.h8_has_moved = True
 
-        logging.info("It's %s's turn" % self.turn.color)
-        return
-
 
 class GameLoop(object):
 
@@ -198,7 +198,6 @@ class GameLoop(object):
             destination = self.game.board.convert_point_to_square(event.x, event.y)
             try:
                 self.game.move(source.coords, destination.coords)
-                logging.info("%s %s" % (source.coords, destination.coords))
             except InvalidMoveException:
                 self.window.title("Chess - Invalid Move")
                 pass
