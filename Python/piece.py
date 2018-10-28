@@ -1,4 +1,5 @@
 from PIL import Image
+from chess_exceptions import InvalidMoveException
 
 
 class Piece(object):
@@ -141,7 +142,9 @@ class Piece(object):
 
         if source == "e1" and self.color == "white":
             if destination == "g1":
-                assert not board.e1_has_moved and not board.h1_has_moved
+                if board.e1_has_moved or board.h1_has_moved:
+                    raise InvalidMoveException("King or Rook has already moved")
+
                 board.white_king = "f1"
                 game.check_for_check()
                 f1_check = self.in_check
@@ -158,7 +161,9 @@ class Piece(object):
                     board.white_king = 'e1'
                     return False
             elif destination == "c1" and board.b1.piece.name() == ' ':
-                assert not board.e1_has_moved and not board.a1_has_moved
+                if board.e1_has_moved or board.a1_has_moved:
+                    raise InvalidMoveExcetion("King or Rook has already moved")
+
                 board.white_king = "d1"
                 game.check_for_check()
                 d1_check = self.in_check
@@ -178,7 +183,9 @@ class Piece(object):
 
         if source == "e8" and self.color == "black":
             if destination == "g8":
-                assert not board.e8_has_moved and not board.h8_has_moved
+                if board.e8_has_moved or board.h8_has_moved:
+                    raise InvalidMoveException("King or Rook has already moved")
+
                 board.black_king = "f8"
                 game.check_for_check()
                 f8_check = self.in_check
@@ -195,7 +202,9 @@ class Piece(object):
                     board.black_king = 'e8'
                     return False
             elif destination == "c8" and board.b8.piece.name() == ' ':
-                assert not board.e8_has_moved and not board.a8_has_moved
+                if board.e8_has_moved or board.a8_has_moved:
+                    raise InvalidMoveExcetion("King or Rook has already moved")
+
                 board.black_king = "f8"
                 game.check_for_check()
                 f8_check = self.in_check

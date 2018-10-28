@@ -1,4 +1,5 @@
 from piece import Pawn, Rook, Knight, Bishop, Queen, King, Piece
+from chess_exceptions import InvalidMoveException
 
 class Square(object):
    
@@ -238,7 +239,9 @@ class Board(object):
         return x
 
     def convert_x_axis_to_letter(self, x):
-        assert x > 0 and x < 9
+        if x <1 or x > 8:
+            raise InvalidMoveException("Invalid X axis")
+
         if x == 1:
             return "a"
         elif x == 2:

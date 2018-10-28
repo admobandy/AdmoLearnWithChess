@@ -5,6 +5,7 @@ import re
 from tkinter import Label, Tk
 from board import Board
 from piece import Piece
+from chess_exceptions import InvalidMoveException
 from PIL import ImageTk, Image, ImageOps
 
 logging.basicConfig(filename='chess.log', level=logging.INFO)
@@ -46,7 +47,7 @@ class Game(object):
                     self.board.text_to_square(black_king_square).piece.in_check = True
                     return True
 
-        except AssertionError:
+        except InvalidMoveException:
             pass
 
         try:
@@ -58,7 +59,7 @@ class Game(object):
                     self.board.text_to_square(white_king_square).piece.in_check = True
                     return True
 
-        except AssertionError:
+        except InvalidMoveException:
             pass
 
         return False
@@ -75,18 +76,29 @@ class Game(object):
         logging.info("Black in Check:%s White in Check:%s" % (self.player2.in_check, self.player1.in_check))
 
     def move(self, source_square, destination_square, checking_for_check=False):
-        assert source_square != destination_square
-        assert re.match('[a-h]{1}[1-8]{1}', destination_square)
-        assert re.match('[a-h]{1}[1-8]{1}', source_square)
+        if source_square == destination_square:
+            raise InvalidMoveException("Source square is equal to Destination square")
+
+        if not re.match('[a-h]{1}[1-8]{1}', destination_square):
+            raise InvalidMoveException("Invalid Destination square")
+
+        if not re.match('[a-h]{1}[1-8]{1}', source_square):
+            raise InvalidMoveException("Invalid Source square")
+
         source = self.board.text_to_square(source_square)
         destination = self.board.text_to_square(destination_square)
         piece_name = source.piece.name()
         piece_color = source.piece.color
         if not checking_for_check:
-            assert piece_color == self.turn.color
+            if piece_color != self.turn.color:
+                raise InvalidMoveException("Piece color does not match turn color")
 
-        assert piece_color != destination.piece.color
-        assert source.piece.valid_move(source_square, destination_square, self.board, self, checking_for_check)
+        if piece_color == destination.piece.color:
+            raise InvalidMoveException("Piece color cannot match destination piece color")
+
+        if not source.piece.valid_move(source_square, destination_square, self.board, self, checking_for_check):
+            raise InvalidMoveException("Invalid move for piece")
+
         path = self.board.path(source_square, destination_square)
         logging.info("%s %s\n%s\n%s" % (source_square, destination_square, self.board, map(lambda x: x.coords, path)))
         logging.info("Black king: %s White King: %s" % (self.board.black_king, self.board.white_king))
@@ -94,7 +106,8 @@ class Game(object):
 
         if piece_name != "knight" and len(path) > 2 and piece_name != "king":
             for square in path[1:-1]:
-                assert square.piece.name() == ' '
+                if square.piece.name() != ' ':
+                    raise InvalidMoveException("Square is not empty")
 
         if checking_for_check:
             return True
@@ -177,7 +190,7 @@ class GameLoop(object):
             try:
                 self.game.move(source.coords, destination.coords)
                 logging.info("%s %s" % (source.coords, destination.coords))
-            except AssertionError:
+            except InvalidMoveException:
                 self.window.title("Chess - Invalid Move")
                 pass
             except AttributeError:
