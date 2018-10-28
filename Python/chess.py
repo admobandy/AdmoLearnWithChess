@@ -1,7 +1,10 @@
+import argparse
 import cv2
+import json
 import logging
 import os
 import re
+import time
 from tkinter import Label, Tk
 from board import Board
 from piece import Piece
@@ -9,6 +12,11 @@ from chess_exceptions import InvalidMoveException
 from PIL import ImageTk, Image, ImageOps
 
 logging.basicConfig(filename='chess.log', level=logging.INFO)
+
+click_map = None
+with open('click_map.json') as data:
+    click_map = json.load(data)
+
 
 class Player(object):
 
@@ -172,6 +180,7 @@ class GameLoop(object):
         if self.first_click:
             self.first_click_x = event.x
             self.first_click_y = event.y
+            logging.info("Click location x:{} - y:{}".format(event.x, event.y))
             try:
                 square = self.game.board.convert_point_to_square(self.first_click_x, self.first_click_y) 
                 square.piece.image = ImageOps.crop(square.piece.image, border=3)
@@ -203,10 +212,34 @@ class GameLoop(object):
                 destination.piece.image = destination.piece.get_image()
                 self.first_click = True
 
-    def __init__(self):
+
+    def move_script_event(self, event):
+        logging.info("Attempting to execute move script")
+        with open(self.movelistfile) as moves:
+            line = moves.readline()
+            while line:
+                source, destination = line.replace('\n', '').split(":")
+                source_x = int(click_map[source]['x'])
+                source_y = int(click_map[source]['y'])
+                dest_x = int(click_map[destination]['x'])
+                dest_y = int(click_map[destination]['y'])
+                logging.info("Executing scripted move")
+                event.x = source_x
+                event.y = source_y
+                self.click_event(event)
+                self.window.update()
+                event.x = dest_x
+                event.y = dest_y
+                self.click_event(event)
+                time.sleep(1)
+                line = moves.readline()
+
+
+    def __init__(self, movelistfile):
         os.system('clear')
         self.window = Tk()
         self.game = Game()
+        self.movelistfile = movelistfile
         self.first_click = True
         self.first_click_x = None
         self.first_click_y = None
@@ -216,8 +249,13 @@ class GameLoop(object):
         frame = self.get_frame()
         self.panel = Label(self.window, image = frame)
         self.panel.bind('<Button-1>', self.click_event)
+        self.panel.bind('<Button-3>', self.move_script_event)
         self.panel.pack(side = "bottom", fill = "both", expand = "yes")
         self.window.mainloop()
 
+
 if __name__ == "__main__":
-    GameLoop()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--movelistfile')
+    args = parser.parse_args()
+    GameLoop(args.movelistfile)
