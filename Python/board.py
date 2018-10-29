@@ -152,10 +152,8 @@ class Board(object):
                 "f8": self.f8,
                 "g8": self.g8,
                 "h8": self.h8,}
-        try:
-            return ttsd[text]
-        except KeyError:
-            pass
+
+        return ttsd[text]
 
     def y_transform(self, y):
         transform = {'1': '8',

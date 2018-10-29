@@ -4,18 +4,18 @@ from chess_exceptions import InvalidMoveException
 
 class Piece(object):
 
-    def __init__(self, color=" "):
+    def __init__(self, color=' '):
         self.color = color
         self.image = self.get_image()
 
     def get_image(self):
-        try:
+        if self.color == ' ' or self.name == ' ':
+            return
+        else:
             return Image.open("%s_%s.png" % (self.color, self.name()))
-        except Exception:
-            pass
 
     def name(self):
-        return " "
+        return ' ' 
 
     def valid_move(self, s, d, board, game, cfc):
         return False
@@ -102,7 +102,7 @@ class Piece(object):
     def destination_is_empty(self, d_x, d_y, board):
         location = "%s%s" % (board.convert_x_axis_to_letter(d_x), d_y)
         location = board.text_to_square(location)
-        if location.piece.name() == " ":
+        if location.piece.name() == ' ':
             return True
 
         return False
@@ -137,7 +137,7 @@ class Piece(object):
             return False
 
         for square in path[1:]:
-            if square.piece.name() != " ":
+            if square.piece.name() != ' ':
                 return False
 
         if source == "e1" and self.color == "white":
@@ -205,13 +205,13 @@ class Piece(object):
                 if board.e8_has_moved or board.a8_has_moved:
                     raise InvalidMoveExcetion("King or Rook has already moved")
 
-                board.black_king = "f8"
+                board.black_king = "d8"
                 game.check_for_check()
-                f8_check = self.in_check
-                board.black_king = "g8"
+                d8_check = self.in_check
+                board.black_king = "c8"
                 game.check_for_check()
-                g8_check = self.in_check
-                if not f8_check and not g8_check:
+                c8_check = self.in_check
+                if not d8_check and not c8_check:
                     board.a8.piece = Piece()
                     board.b8.piece = Piece()
                     board.c8.piece = King(color="black")
@@ -351,9 +351,26 @@ class King(Piece):
 
     def valid_move(self, s, d, board, game, cfc):
         s_x, s_y, d_x, d_y = board.get_coords(s, d)
+        #source = board.convert_point_to_square(s_x, s_y)
+        #destination = board.convert_point_to_square(d_x, d_y)
         # are we moving a single square
         single = self.is_single_square_move(s_x, s_y, d_x, d_y, board)
         if single:
+            """ TODO: Fix the bug here
+            if self.color == 'black':
+                board.black_king = destination.coords
+                bk_in_check = game.check_for_check()
+                if bk_in_check:
+                    board.black_king = source.coords
+                    return False
+            elif self.color == 'white':
+                board.white_king = destination.coords
+                wk_in_check = game.check_for_check()
+                if wk_in_check:
+                    board.white_king = source.coords
+                    return False
+            """
+
             return True
         # are we castling
         castle = False

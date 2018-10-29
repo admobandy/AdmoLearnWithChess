@@ -45,9 +45,11 @@ class Game(object):
         black_king_square = self.board.black_king
         white_king_square = self.board.white_king
         source = self.board.text_to_square(square)
+        if source.piece.name() == ' ':
+            return False
 
         try:
-            if source.piece.color is not "black" and source.piece.name() is not ' ':
+            if source.piece.color != "black":
                 black_valid = self.move(square, black_king_square, checking_for_check=True)
                 if black_valid:
                     logging.info("Black in check from %s" % square)
@@ -59,7 +61,7 @@ class Game(object):
             pass
 
         try:
-            if source.piece.color is not "white" and source.piece.name() is not ' ':
+            if source.piece.color != "white":
                 white_valid = self.move(square, white_king_square, checking_for_check=True)
                 if white_valid:
                     logging.info("White in check from %s" % square)
@@ -81,6 +83,7 @@ class Game(object):
         for square in self.all_squares():
             in_check = self.try_move(square)
             if in_check:
+                logging.info("King is, or would be, in check by {}".format(square))
                 raise InvalidMoveException("Move causes king to be in or move through check")
 
         logging.info("Black in Check:%s White in Check:%s" % (self.player2.in_check, self.player1.in_check))
@@ -181,13 +184,10 @@ class GameLoop(object):
             self.first_click_x = event.x
             self.first_click_y = event.y
             logging.info("Click location x:{} - y:{}".format(event.x, event.y))
-            try:
-                square = self.game.board.convert_point_to_square(self.first_click_x, self.first_click_y) 
+            square = self.game.board.convert_point_to_square(self.first_click_x, self.first_click_y) 
+            if square.piece.image is not None:
                 square.piece.image = ImageOps.crop(square.piece.image, border=3)
                 square.piece.image = ImageOps.expand(square.piece.image, border=3, fill='lightgreen')
-            except AttributeError:
-                square.piece.image = square.piece.get_image()
-                self.window.title("Chess")
 
             self.first_click = False
             frame = self.get_frame()
@@ -200,9 +200,6 @@ class GameLoop(object):
                 self.game.move(source.coords, destination.coords)
             except InvalidMoveException:
                 self.window.title("Chess - Invalid Move")
-                pass
-            except AttributeError:
-                pass
             finally:
                 frame = self.get_frame()
                 self.panel.configure(image = frame)
