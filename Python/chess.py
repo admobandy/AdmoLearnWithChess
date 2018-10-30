@@ -32,6 +32,7 @@ class Game(object):
         self.player1 = Player(color="white")
         self.player2 = Player()
         self.turn = self.player1
+        self.move_counter = 0
 
     def all_squares(self):
         squares = []
@@ -41,55 +42,43 @@ class Game(object):
         
         return squares
 
-    def try_move(self, square):
-        black_king_square = self.board.black_king
-        white_king_square = self.board.white_king
-        source = self.board.text_to_square(square)
-        if source.piece.name() == ' ':
-            return False
+    def update_threats(self):
+        self.clear_threats()
+        for source in self.all_squares():
+            for destination in self.all_squares():
+                try:
+                    self.move(source, destination, updating_threats=True)
+                    source_piece = self.board.text_to_square(source).piece
+                    destination_piece = self.board.text_to_square(destination).piece
+                    logging.info("{} {} {} threatens {} {} {}".format(source, 
+                        source_piece.color,
+                        source_piece.name(),
+                        destination,
+                        destination_piece.color,
+                        destination_piece.name()))
 
-        try:
-            if source.piece.color != "black":
-                black_valid = self.move(square, black_king_square, checking_for_check=True)
-                if black_valid:
-                    logging.info("Black in check from %s" % square)
-                    self.player2.in_check = True
-                    self.board.text_to_square(black_king_square).piece.in_check = True
-                    return True
+                    if destination == self.board.white_king and source_piece.color != "white":
+                        white_king = self.board.text_to_square(destination).piece.in_check = True
+                        self.player1.in_check = True
 
-        except InvalidMoveException:
-            pass
+                    if destination == self.board.black_king and source_piece.color != "black":
+                        black_king = self.board.text_to_square(destination).piece.in_check = True
+                        self.player2.in_check = True
 
-        try:
-            if source.piece.color != "white":
-                white_valid = self.move(square, white_king_square, checking_for_check=True)
-                if white_valid:
-                    logging.info("White in check from %s" % square)
-                    self.player1.in_check = True
-                    self.board.text_to_square(white_king_square).piece.in_check = True
-                    return True
-
-        except InvalidMoveException:
-            pass
-
-        return False
+                except InvalidMoveException:
+                    pass
 
 
-    def check_for_check(self):
-        self.board.text_to_square(self.board.black_king).piece.in_check = False
+    def clear_threats(self):
         self.board.text_to_square(self.board.white_king).piece.in_check = False
+        self.board.text_to_square(self.board.black_king).piece.in_check = False
         self.player1.in_check = False
         self.player2.in_check = False
         for square in self.all_squares():
-            in_check = self.try_move(square)
-            if in_check:
-                logging.info("King is, or would be, in check by {}".format(square))
-                raise InvalidMoveException("Move causes king to be in or move through check")
+            square = self.board.text_to_square(square)
+            square.threats = dict()
 
-        logging.info("Black in Check:%s White in Check:%s" % (self.player2.in_check, self.player1.in_check))
-        logging.info("#######################################")
-
-    def move(self, source_square, destination_square, checking_for_check=False):
+    def move(self, source_square, destination_square, updating_threats=False):
         if source_square == destination_square:
             raise InvalidMoveException("Source square is equal to Destination square")
 
@@ -103,18 +92,18 @@ class Game(object):
         destination = self.board.text_to_square(destination_square)
         piece_name = source.piece.name()
         piece_color = source.piece.color
-        if not checking_for_check:
+        if not updating_threats:
             if piece_color != self.turn.color:
                 raise InvalidMoveException("Piece color does not match turn color")
 
         if piece_color == destination.piece.color:
             raise InvalidMoveException("Piece color cannot match destination piece color")
 
-        if not source.piece.valid_move(source_square, destination_square, self.board, self, checking_for_check):
+        if not source.piece.valid_move(source_square, destination_square, self.board, self, updating_threats):
             raise InvalidMoveException("Invalid move for piece")
 
         path = self.board.path(source_square, destination_square)
-        logging.info("%s %s\n%s\n%s" % (source_square, destination_square, self.board, map(lambda x: x.coords, path)))
+        #logging.info("%s %s\n%s\n%s" % (source_square, destination_square, self.board, map(lambda x: x.coords, path)))
         logging.info("Black king: %s White King: %s" % (self.board.black_king, self.board.white_king))
         logging.info("Source piece is: %s" % piece_name)
 
@@ -123,18 +112,19 @@ class Game(object):
                 if square.piece.name() != ' ':
                     raise InvalidMoveException("Square is not empty")
 
-        if checking_for_check:
+        if updating_threats:
+            self.board.text_to_square(destination_square).threats[source_square] = self.move_counter
             return True
         else:
             dest_bkp_piece = destination.piece
             source_bkp_piece = source.piece
             destination.piece = source.piece
             source.piece = Piece()
-            self.check_for_check()
+            self.update_threats()
             if self.turn.in_check:
                 destination.piece = dest_bkp_piece
                 source.piece = source_bkp_piece
-                self.check_for_check()
+                self.update_threats()
                 return False
 
         self.board.last_move = destination
@@ -162,6 +152,9 @@ class Game(object):
             self.board.h1_has_moved = True
         elif source_square == "h8":
             self.board.h8_has_moved = True
+
+        self.move_counter += 1
+        self.update_threats()
 
 
 class GameLoop(object):
@@ -198,7 +191,8 @@ class GameLoop(object):
             destination = self.game.board.convert_point_to_square(event.x, event.y)
             try:
                 self.game.move(source.coords, destination.coords)
-            except InvalidMoveException:
+            except InvalidMoveException as e:
+                logging.info(e.message)
                 self.window.title("Chess - Invalid Move")
             finally:
                 frame = self.get_frame()

@@ -17,7 +17,7 @@ class Piece(object):
     def name(self):
         return ' ' 
 
-    def valid_move(self, s, d, board, game, cfc):
+    def valid_move(self, s, d, board, game, updating_threats):
         return False
 
     def is_single_square_move(self, s_x, s_y, d_x, d_y, board):
@@ -146,10 +146,10 @@ class Piece(object):
                     raise InvalidMoveException("King or Rook has already moved")
 
                 board.white_king = "f1"
-                game.check_for_check()
+                game.update_threats()
                 f1_check = self.in_check
                 board.white_king = "g1"
-                game.check_for_check()
+                game.update_threats()
                 g1_check = self.in_check
                 if not f1_check and not g1_check:
                     board.e1.piece = Piece()
@@ -165,10 +165,10 @@ class Piece(object):
                     raise InvalidMoveExcetion("King or Rook has already moved")
 
                 board.white_king = "d1"
-                game.check_for_check()
+                game.update_threats()
                 d1_check = self.in_check
                 board.white_king = "c1"
-                game.check_for_check()
+                game.update_threats()
                 c1_check = self.in_check
                 if not d1_check and not c1_check:
                     board.a1.piece = Piece()
@@ -187,10 +187,10 @@ class Piece(object):
                     raise InvalidMoveException("King or Rook has already moved")
 
                 board.black_king = "f8"
-                game.check_for_check()
+                game.update_threats()
                 f8_check = self.in_check
                 board.black_king = "g8"
-                game.check_for_check()
+                game.update_threats()
                 g8_check = self.in_check
                 if not f8_check and not g8_check:
                     board.e8.piece = Piece()
@@ -206,10 +206,10 @@ class Piece(object):
                     raise InvalidMoveExcetion("King or Rook has already moved")
 
                 board.black_king = "d8"
-                game.check_for_check()
+                game.update_threats()
                 d8_check = self.in_check
                 board.black_king = "c8"
-                game.check_for_check()
+                game.update_threats()
                 c8_check = self.in_check
                 if not d8_check and not c8_check:
                     board.a8.piece = Piece()
@@ -242,7 +242,15 @@ class Pawn(Piece):
     def name(self):
         return "pawn"
 
-    def valid_move(self, s, d, board, game, cfc):
+    def valid_move(self, s, d, board, game, updating_threats):
+        first_move = self.first_move
+        valid = self._valid_move(s, d, board, game, updating_threats)
+        if updating_threats:
+            self.first_move = first_move
+
+        return valid
+
+    def _valid_move(self, s, d, board, game, updating_threats):
         s_x, s_y, d_x, d_y = board.get_coords(s, d)
         x_diff = d_x - s_x
         y_diff = d_y - s_y
@@ -264,6 +272,9 @@ class Pawn(Piece):
         # are we capturing diagonally
         if self.is_diagonal_move(s_x, s_y, d_x, d_y, board) and not self.destination_is_empty(d_x, d_y, board):
             if self.first_move:
+                if y_diff > 2 or y_diff < -2:
+                    return False
+
                 self.first_move = False
 
             return True
@@ -287,7 +298,7 @@ class Rook(Piece):
     def name(self):
         return "rook"
 
-    def valid_move(self, s, d, board, game, cfc):
+    def valid_move(self, s, d, board, game, updating_threats):
         s_x, s_y, d_x, d_y = board.get_coords(s, d)
         # are we not moving diagonally
         return self.is_rank_or_file_move(s_x, s_y, d_x, d_y, board)
@@ -300,7 +311,7 @@ class Knight(Piece):
     def name(self):
         return "knight"
 
-    def valid_move(self, s, d, board, game, cfc):
+    def valid_move(self, s, d, board, game, updating_threats):
         s_x, s_y, d_x, d_y = board.get_coords(s, d)
         return self.is_l_move(s_x, s_y, d_x, d_y, board)
 
@@ -312,7 +323,7 @@ class Bishop(Piece):
     def name(self):
         return "bishop"
 
-    def valid_move(self, s, d, board, game, cfc):
+    def valid_move(self, s, d, board, game, updating_threats):
         s_x, s_y, d_x, d_y = board.get_coords(s, d)
         if self.is_diagonal_move(s_x, s_y, d_x, d_y, board):
             return True
@@ -327,7 +338,7 @@ class Queen(Piece):
     def name(self):
         return "queen"
 
-    def valid_move(self, s, d, board, game, cfc):
+    def valid_move(self, s, d, board, game, updating_threats):
         s_x, s_y, d_x, d_y = board.get_coords(s, d)
         # are we moving diagonally
         diagonal = self.is_diagonal_move(s_x, s_y, d_x, d_y, board)
@@ -349,32 +360,31 @@ class King(Piece):
     def name(self):
         return "king"
 
-    def valid_move(self, s, d, board, game, cfc):
+    def valid_move(self, s, d, board, game, updating_threats):
         s_x, s_y, d_x, d_y = board.get_coords(s, d)
-        #source = board.convert_point_to_square(s_x, s_y)
-        #destination = board.convert_point_to_square(d_x, d_y)
+        source = board.text_to_square(s)
+        destination = board.text_to_square(d)
         # are we moving a single square
         single = self.is_single_square_move(s_x, s_y, d_x, d_y, board)
+
         if single:
-            """ TODO: Fix the bug here
             if self.color == 'black':
                 board.black_king = destination.coords
-                bk_in_check = game.check_for_check()
-                if bk_in_check:
+                game.update_threats()
+                if board.black_king.in_check:
                     board.black_king = source.coords
                     return False
             elif self.color == 'white':
                 board.white_king = destination.coords
-                wk_in_check = game.check_for_check()
-                if wk_in_check:
+                game.update_threats()
+                if board.white_king.in_check:
                     board.white_king = source.coords
                     return False
-            """
 
             return True
         # are we castling
         castle = False
-        if not self.in_check and not cfc:
+        if not self.in_check and not updating_threats:
             return self.is_castle(s_x, s_y, d_x, d_y, board, game)
 
         return False

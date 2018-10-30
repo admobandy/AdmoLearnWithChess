@@ -6,6 +6,7 @@ class Square(object):
     def __init__(self, coords, piece=None):
         self.piece = piece
         self.coords = coords
+        self.threats = dict()
 
     def __str__(self):
         return "%s%s" % (self.piece.color[0], self.piece.name()[0])
@@ -152,8 +153,10 @@ class Board(object):
                 "f8": self.f8,
                 "g8": self.g8,
                 "h8": self.h8,}
-
-        return ttsd[text]
+        try:
+            return ttsd[text]
+        except KeyError:
+            pass
 
     def y_transform(self, y):
         transform = {'1': '8',
