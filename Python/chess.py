@@ -123,10 +123,6 @@ class Game(object):
             source.piece = Piece()
             self.update_threats()
             if self.turn.in_check:
-                if source.piece.name() == "king":
-                    import pdb
-                    pdb.set_trace()
-
                 destination.piece = dest_bkp_piece
                 source.piece = source_bkp_piece
                 self.update_threats()
