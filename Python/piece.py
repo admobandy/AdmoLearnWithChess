@@ -145,82 +145,67 @@ class Piece(object):
                 if board.e1_has_moved or board.h1_has_moved:
                     raise InvalidMoveException("King or Rook has already moved")
 
-                board.white_king = "f1"
-                game.update_threats()
-                f1_check = self.in_check
-                board.white_king = "g1"
-                game.update_threats()
-                g1_check = self.in_check
-                if not f1_check and not g1_check:
-                    board.e1.piece = Piece()
-                    board.f1.piece = Rook(color="white")
-                    board.g1.piece = King(color="white")
-                    board.h1.piece = Piece()
-                    return True
-                else:
-                    board.white_king = 'e1'
-                    return False
+                # TODO: FIX CASTLE KING SIDE WHITE
+                for coords in board.f1.threats.keys():
+                    if board.text_to_square(coords).piece.color == "black":
+                        return False
+                for coords in board.g1.threats.keys():
+                    if board.text_to_square(coords).piece.color == "black":
+                        return False
+
+                game.move("h1", "f1", keep_turn=True)
+                return True
+
             elif destination == "c1" and board.b1.piece.name() == ' ':
                 if board.e1_has_moved or board.a1_has_moved:
                     raise InvalidMoveExcetion("King or Rook has already moved")
 
-                board.white_king = "d1"
-                game.update_threats()
-                d1_check = self.in_check
-                board.white_king = "c1"
-                game.update_threats()
-                c1_check = self.in_check
-                if not d1_check and not c1_check:
-                    board.a1.piece = Piece()
-                    board.b1.piece = Piece()
-                    board.c1.piece = King(color="white")
-                    board.d1.piece = Rook(color="white")
-                    board.e1.piece = Piece()
-                    return True
-                else:
-                    board.white_king = 'e1'
-                    return False
+                # TODO: FIX CASTLE QUEEN SIDE WHITE
+                for coords in board.b1.threats.keys():
+                    if board.text_to_square(coords).piece.color == "black":
+                        return False
+                for coords in board.c1.threats.keys():
+                    if board.text_to_square(coords).piece.color == "black":
+                        return False
+                for coords in board.d1.threats.keys():
+                    if board.text_to_square(coords).piece.color == "black":
+                        return False
+
+                game.move("a1", "d1", keep_turn=True)
+                return True
 
         if source == "e8" and self.color == "black":
             if destination == "g8":
                 if board.e8_has_moved or board.h8_has_moved:
                     raise InvalidMoveException("King or Rook has already moved")
 
-                board.black_king = "f8"
-                game.update_threats()
-                f8_check = self.in_check
-                board.black_king = "g8"
-                game.update_threats()
-                g8_check = self.in_check
-                if not f8_check and not g8_check:
-                    board.e8.piece = Piece()
-                    board.f8.piece = Rook(color="black")
-                    board.g8.piece = King(color="black")
-                    board.h8.piece = Piece()
-                    return True
-                else:
-                    board.black_king = 'e8'
-                    return False
+                # TODO: FIX CASTLE KING SIDE BLACK
+                for coords in board.f8.threats.keys():
+                    if board.text_to_square(coords).piece.color == "white":
+                        return False
+                for coords in board.g8.threats.keys():
+                    if board.text_to_square(coords).piece.color == "white":
+                        return False
+
+                game.move("h8", "f8", keep_turn=True)
+                return True
+
             elif destination == "c8" and board.b8.piece.name() == ' ':
                 if board.e8_has_moved or board.a8_has_moved:
                     raise InvalidMoveExcetion("King or Rook has already moved")
+                # TODO: FIX CASTLE QUEEN SIDE BLACK
+                for coords in board.b8.threats.keys():
+                    if board.text_to_square(coords).piece.color == "black":
+                        return False
+                for coords in board.c8.threats.keys():
+                    if board.text_to_square(coords).piece.color == "black":
+                        return False
+                for coords in board.d8.threats.keys():
+                    if board.text_to_square(coords).piece.color == "black":
+                        return False
 
-                board.black_king = "d8"
-                game.update_threats()
-                d8_check = self.in_check
-                board.black_king = "c8"
-                game.update_threats()
-                c8_check = self.in_check
-                if not d8_check and not c8_check:
-                    board.a8.piece = Piece()
-                    board.b8.piece = Piece()
-                    board.c8.piece = King(color="black")
-                    board.d8.piece = Rook(color="black")
-                    board.e8.piece = Piece()
-                    return True
-                else:
-                    board.black_king = 'e8'
-                    return False
+                game.move("a8", "d8", keep_turn=True)
+                return True
 
         return False
 

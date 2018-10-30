@@ -78,7 +78,7 @@ class Game(object):
             square = self.board.text_to_square(square)
             square.threats = dict()
 
-    def move(self, source_square, destination_square, updating_threats=False):
+    def move(self, source_square, destination_square, updating_threats=False, keep_turn=False):
         if source_square == destination_square:
             raise InvalidMoveException("Source square is equal to Destination square")
 
@@ -135,10 +135,11 @@ class Game(object):
             elif piece_color == "white":
                 self.board.white_king = destination_square
 
-        if self.turn.color == "white":
-            self.turn = self.player2
-        elif self.turn.color == "black":
-            self.turn = self.player1
+        if not keep_turn:
+            if self.turn.color == "white":
+                self.turn = self.player2
+            elif self.turn.color == "black":
+                self.turn = self.player1
 
         if source_square == "a1":
             self.board.a1_has_moved = True
