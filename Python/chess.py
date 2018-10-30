@@ -121,8 +121,21 @@ class Game(object):
             source_bkp_piece = source.piece
             destination.piece = source.piece
             source.piece = Piece()
+            if destination.piece.name() == "king":
+                if destination.piece.color == "white":
+                    self.board.white_king = destination_square
+                if destination.piece.color == "black":
+                    self.board.black_king = destination_square
+
             self.update_threats()
+
             if self.turn.in_check:
+                if destination_piece.name() == "king":
+                    if destination.piece.color == "white":
+                        self.board.white_king = source_square
+                    if destination_piece.color == "black":
+                        self.board.black_king = source_square
+
                 destination.piece = dest_bkp_piece
                 source.piece = source_bkp_piece
                 self.update_threats()
