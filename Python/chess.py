@@ -103,7 +103,7 @@ class Game(object):
             raise InvalidMoveException("Invalid move for piece")
 
         path = self.board.path(source_square, destination_square)
-        #logging.info("%s %s\n%s\n%s" % (source_square, destination_square, self.board, map(lambda x: x.coords, path)))
+        logging.info("%s %s\n%s\n%s" % (source_square, destination_square, self.board, map(lambda x: x.coords, path)))
         logging.info("Black king: %s White King: %s" % (self.board.black_king, self.board.white_king))
         logging.info("Source piece is: %s" % piece_name)
 

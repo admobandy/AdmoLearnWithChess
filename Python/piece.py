@@ -368,18 +368,15 @@ class King(Piece):
         single = self.is_single_square_move(s_x, s_y, d_x, d_y, board)
 
         if single:
-            if self.color == 'black':
-                board.black_king = destination.coords
-                game.update_threats()
-                if board.black_king.in_check:
-                    board.black_king = source.coords
-                    return False
-            elif self.color == 'white':
-                board.white_king = destination.coords
-                game.update_threats()
-                if board.white_king.in_check:
-                    board.white_king = source.coords
-                    return False
+            # TODO: Figure out infinite loop here 
+            if self.color == 'black' and not updating_threats:
+                for coords in destination.threats.keys():
+                    if board.text_to_square(coords).piece.color == "white": 
+                        return False
+            elif self.color == 'white' and not updating_threats:
+                for coords in destination.threats.keys():
+                    if board.text_to_square(coords).piece.color == "black":
+                        return False
 
             return True
         # are we castling
