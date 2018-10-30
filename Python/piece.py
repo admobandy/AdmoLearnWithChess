@@ -107,7 +107,7 @@ class Piece(object):
 
         return False
 
-    def is_en_passant(self, s_x, s_y, d_x, d_y, board):
+    def is_en_passant(self, s_x, s_y, d_x, d_y, board, updating_threats):
         if self.color == "white" and s_y != 5:
             return False
 
@@ -119,7 +119,7 @@ class Piece(object):
         capture = "%s%s" % (board.convert_x_axis_to_letter(d_x), d_y - y_diff)
         capture = board.text_to_square(capture)
         if diagonal and self.destination_is_empty(d_x, d_y, board) and capture.piece.name() == "pawn":
-            if board.last_move == capture:
+            if board.last_move == capture and not updating_threats:
                 capture.piece = Piece()
                 return True
 
@@ -279,7 +279,7 @@ class Pawn(Piece):
 
             return True
         # is this an en passant
-        if self.is_en_passant(s_x, s_y, d_x, d_y, board):
+        if self.is_en_passant(s_x, s_y, d_x, d_y, board, updating_threats):
 
             return True
         # are we upgrading
