@@ -249,8 +249,12 @@ class Pawn(Piece):
                 
                 if self.first_move:
                     self.first_move = False
+            
+            if board.text_to_square(d).piece.name() == ' ':
+                return True
+            else:
+                return False
 
-            return True
         # are we capturing diagonally
         if self.is_diagonal_move(s_x, s_y, d_x, d_y, board) and not self.destination_is_empty(d_x, d_y, board):
             if self.first_move:
@@ -350,7 +354,6 @@ class King(Piece):
         single = self.is_single_square_move(s_x, s_y, d_x, d_y, board)
 
         if single:
-            # TODO: Figure out infinite loop here 
             if self.color == 'black' and not updating_threats:
                 for coords in destination.threats.keys():
                     if board.text_to_square(coords).piece.color == "white": 

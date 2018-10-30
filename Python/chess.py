@@ -103,9 +103,10 @@ class Game(object):
             raise InvalidMoveException("Invalid move for piece")
 
         path = self.board.path(source_square, destination_square)
-        logging.info("%s %s\n%s\n%s" % (source_square, destination_square, self.board, map(lambda x: x.coords, path)))
-        logging.info("Black king: %s White King: %s" % (self.board.black_king, self.board.white_king))
-        logging.info("Source piece is: %s" % piece_name)
+        if not updating_threats:
+            logging.info("%s %s\n%s\n%s" % (source_square, destination_square, self.board, map(lambda x: x.coords, path)))
+            logging.info("Black king: %s White King: %s" % (self.board.black_king, self.board.white_king))
+            logging.info("Source piece is: %s" % piece_name)
 
         if piece_name != "knight" and len(path) > 2 and piece_name != "king":
             for square in path[1:-1]:
@@ -122,6 +123,10 @@ class Game(object):
             source.piece = Piece()
             self.update_threats()
             if self.turn.in_check:
+                if source.piece.name() == "king":
+                    import pdb
+                    pdb.set_trace()
+
                 destination.piece = dest_bkp_piece
                 source.piece = source_bkp_piece
                 self.update_threats()
