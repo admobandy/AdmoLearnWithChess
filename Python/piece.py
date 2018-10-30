@@ -145,7 +145,6 @@ class Piece(object):
                 if board.e1_has_moved or board.h1_has_moved:
                     raise InvalidMoveException("King or Rook has already moved")
 
-                # TODO: FIX CASTLE KING SIDE WHITE
                 for coords in board.f1.threats.keys():
                     if board.text_to_square(coords).piece.color == "black":
                         return False
@@ -160,7 +159,6 @@ class Piece(object):
                 if board.e1_has_moved or board.a1_has_moved:
                     raise InvalidMoveExcetion("King or Rook has already moved")
 
-                # TODO: FIX CASTLE QUEEN SIDE WHITE
                 for coords in board.b1.threats.keys():
                     if board.text_to_square(coords).piece.color == "black":
                         return False
@@ -179,7 +177,6 @@ class Piece(object):
                 if board.e8_has_moved or board.h8_has_moved:
                     raise InvalidMoveException("King or Rook has already moved")
 
-                # TODO: FIX CASTLE KING SIDE BLACK
                 for coords in board.f8.threats.keys():
                     if board.text_to_square(coords).piece.color == "white":
                         return False
@@ -193,15 +190,15 @@ class Piece(object):
             elif destination == "c8" and board.b8.piece.name() == ' ':
                 if board.e8_has_moved or board.a8_has_moved:
                     raise InvalidMoveExcetion("King or Rook has already moved")
-                # TODO: FIX CASTLE QUEEN SIDE BLACK
+
                 for coords in board.b8.threats.keys():
-                    if board.text_to_square(coords).piece.color == "black":
+                    if board.text_to_square(coords).piece.color == "white":
                         return False
                 for coords in board.c8.threats.keys():
-                    if board.text_to_square(coords).piece.color == "black":
+                    if board.text_to_square(coords).piece.color == "white":
                         return False
                 for coords in board.d8.threats.keys():
-                    if board.text_to_square(coords).piece.color == "black":
+                    if board.text_to_square(coords).piece.color == "white":
                         return False
 
                 game.move("a8", "d8", keep_turn=True)
