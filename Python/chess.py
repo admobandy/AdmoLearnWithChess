@@ -50,12 +50,6 @@ class Game(object):
                     self.move(source, destination, updating_threats=True)
                     source_piece = self.board.text_to_square(source).piece
                     destination_piece = self.board.text_to_square(destination).piece
-                    logging.info("{} {} {} threatens {} {} {}".format(source, 
-                        source_piece.color,
-                        source_piece.name(),
-                        destination,
-                        destination_piece.color,
-                        destination_piece.name()))
                        
                     if destination == self.board.white_king and source_piece.color != "white":
                         white_king = self.board.text_to_square(destination).piece.in_check = True
