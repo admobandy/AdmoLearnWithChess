@@ -54,12 +54,10 @@ class Game(object):
                     if destination == self.board.white_king and source_piece.color != "white":
                         white_king = self.board.text_to_square(destination).piece.in_check = True
                         self.player1.in_check = True
-                        self.window.title("Chess - Check")
 
                     if destination == self.board.black_king and source_piece.color != "black":
                         black_king = self.board.text_to_square(destination).piece.in_check = True
                         self.player2.in_check = True
-                        self.window.title("Chess - Check")
 
                 except InvalidMoveException:
                     pass
@@ -215,6 +213,8 @@ class GameLoop(object):
                 source.piece.image = source.piece.get_image()
                 destination.piece.image = destination.piece.get_image()
                 self.first_click = True
+                if self.game.player1.in_check or self.game.player2.in_check:
+                    self.window.title("Chess - Check")
 
 
     def move_script_event(self, event):
