@@ -79,6 +79,9 @@ class Game(object):
             square.threats = dict()
 
     def move(self, source_square, destination_square, updating_threats=False, keep_turn=False):
+        player1_already_in_check = self.player1.in_check
+        player2_already_in_check = self.player2.in_check
+
         if source_square == destination_square:
             raise InvalidMoveException("Source square is equal to Destination square")
 
@@ -130,7 +133,7 @@ class Game(object):
             self.update_threats()
 
             if self.turn.in_check:
-                if destination_piece.name() == "king":
+                if destination.piece.name() == "king":
                     if destination.piece.color == "white":
                         self.board.white_king = source_square
                     if destination_piece.color == "black":
