@@ -157,7 +157,7 @@ class Piece(object):
 
             elif destination == "c1" and board.b1.piece.name() == ' ':
                 if board.e1_has_moved or board.a1_has_moved:
-                    raise InvalidMoveExcetion("King or Rook has already moved")
+                    raise InvalidMoveException("King or Rook has already moved")
 
                 for coords in board.b1.threats.keys():
                     if board.text_to_square(coords).piece.color == "black":
@@ -189,7 +189,7 @@ class Piece(object):
 
             elif destination == "c8" and board.b8.piece.name() == ' ':
                 if board.e8_has_moved or board.a8_has_moved:
-                    raise InvalidMoveExcetion("King or Rook has already moved")
+                    raise InvalidMoveException("King or Rook has already moved")
 
                 for coords in board.b8.threats.keys():
                     if board.text_to_square(coords).piece.color == "white":

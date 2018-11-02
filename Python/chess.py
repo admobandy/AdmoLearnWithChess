@@ -56,14 +56,16 @@ class Game(object):
                         destination,
                         destination_piece.color,
                         destination_piece.name()))
-
+                       
                     if destination == self.board.white_king and source_piece.color != "white":
                         white_king = self.board.text_to_square(destination).piece.in_check = True
                         self.player1.in_check = True
+                        self.window.title("Chess - Check")
 
                     if destination == self.board.black_king and source_piece.color != "black":
                         black_king = self.board.text_to_square(destination).piece.in_check = True
                         self.player2.in_check = True
+                        self.window.title("Chess - Check")
 
                 except InvalidMoveException:
                     pass
