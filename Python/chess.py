@@ -235,15 +235,16 @@ class GameLoop(object):
                 event.x = dest_x
                 event.y = dest_y
                 self.click_event(event)
-                time.sleep(1)
+                time.sleep(float(self.movelistsleep))
                 line = moves.readline()
 
 
-    def __init__(self, movelistfile):
+    def __init__(self, movelistfile, movelistsleep):
         os.system('clear')
         self.window = Tk()
         self.game = Game()
         self.movelistfile = movelistfile
+        self.movelistsleep = movelistsleep
         self.first_click = True
         self.first_click_x = None
         self.first_click_y = None
@@ -261,5 +262,6 @@ class GameLoop(object):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--movelistfile')
+    parser.add_argument('--movelistsleep', default=1)
     args = parser.parse_args()
-    GameLoop(args.movelistfile)
+    GameLoop(args.movelistfile, args.movelistsleep)
