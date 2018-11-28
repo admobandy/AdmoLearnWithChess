@@ -173,6 +173,8 @@ class Board(object):
             pass
 
     def convert_point_to_square(self, x, y):
+        x = int(x)
+        y = int(y)
         x_red = int((x - 50) / 74) + 1
         y_red = self.y_transform(int((y + 50) / 74))
         return self.text_to_square("%s%s" % (self.convert_x_axis_to_letter(x_red), y_red))

@@ -8,7 +8,7 @@ import time
 from tkinter import Label, Tk
 from board import Board
 from piece import Piece
-from chess_exceptions import InvalidMoveException
+from chess_exceptions import InvalidMoveException, InvalidArgumentsException
 from PIL import ImageTk, Image, ImageOps
 
 logging.basicConfig(filename='chess.log', level=logging.INFO)
@@ -33,6 +33,10 @@ class Game(object):
         self.player2 = Player()
         self.turn = self.player1
         self.move_counter = 0
+        self.white_material_score = 0
+        self.black_material_score = 0
+        self.white_position_score = 0
+        self.black_position_score = 0
 
     def all_squares(self):
         squares = []
@@ -42,8 +46,38 @@ class Game(object):
         
         return squares
 
+    def get_piece_value(self, piece):
+        if piece.name() == 'pawn':
+            return 1
+        elif piece.name() == 'rook':
+            return 5
+        elif piece.name() == 'knight':
+            return 3
+        elif piece.name() == 'bishop':
+            return 3
+        elif piece.name() == 'queen':
+            return 8
+        elif piece.name() == 'king':
+            return 10
+        else:
+            return 0
+
     def update_threats(self):
         self.clear_threats()
+        self.white_material_score = 0
+        self.black_material_score = 0
+        self.white_position_score = 0
+        self.black_position_score = 0
+        # Create threat matrix
+        # Evaluate material scores
+        for source in self.all_squares():
+            source_piece = self.board.text_to_square(source).piece
+            if source_piece.color == 'white':
+                self.white_material_score += self.get_piece_value(source_piece)
+            elif source_piece.color == 'black':
+                self.black_material_score += self.get_piece_value(source_piece)
+
+        # Evalute position scores
         for source in self.all_squares():
             for destination in self.all_squares():
                 try:
@@ -58,10 +92,14 @@ class Game(object):
                     if destination == self.board.black_king and source_piece.color != "black":
                         black_king = self.board.text_to_square(destination).piece.in_check = True
                         self.player2.in_check = True
+                    
+                    if source_piece.color == 'white':
+                        self.white_position_score += self.get_piece_value(source_piece) 
+                    elif source_piece.color == 'black':
+                        self.black_position_score += self.get_piece_value(source_piece)
 
                 except InvalidMoveException:
                     pass
-
 
     def clear_threats(self):
         self.board.text_to_square(self.board.white_king).piece.in_check = False
@@ -215,7 +253,8 @@ class GameLoop(object):
                 self.first_click = True
                 if self.game.player1.in_check or self.game.player2.in_check:
                     self.window.title("Chess - Check")
-
+                
+                return self.pump_ai_event()
 
     def move_script_event(self, event):
         logging.info("Attempting to execute move script")
@@ -239,8 +278,10 @@ class GameLoop(object):
                 line = moves.readline()
 
 
-    def __init__(self, movelistfile, movelistsleep):
+    def __init__(self, movelistfile, movelistsleep, white_ai=False, black_ai=False):
         os.system('clear')
+        self.white_ai = white_ai
+        self.black_ai = black_ai
         self.window = Tk()
         self.game = Game()
         self.movelistfile = movelistfile
@@ -256,12 +297,121 @@ class GameLoop(object):
         self.panel.bind('<Button-1>', self.click_event)
         self.panel.bind('<Button-3>', self.move_script_event)
         self.panel.pack(side = "bottom", fill = "both", expand = "yes")
+        if self.white_ai:
+            self.window.after(500, self.pump_ai_event)
+
         self.window.mainloop()
+
+    def pump_ai_event(self):
+        self.window.title("Chess - AI Processing")
+        self.window.update()
+        if self.black_ai and self.game.turn.color == 'black':
+            self.evaluate_ai_moves('black')
+        elif self.white_ai and self.game.turn.color == 'white':
+            self.evaluate_ai_moves('white')
+        else:
+            pass
+
+    def evaluate_ai_moves(self, color):
+        logging.info("Starting AI move generation")
+        # Get a list of valid moves for this color
+        self.game.update_threats()
+        pieces = []
+        opponent_pieces = []
+        possible_moves = dict()
+        opponent_moves = dict()
+        logging.info("Gathering pieces for each color")
+        for location in self.game.all_squares():
+            current_square = self.game.board.text_to_square(location)
+            if current_square.piece.color == color:
+                pieces.append(location)
+            elif current_square.piece.color != ' ':
+                opponent_pieces.append(location)
+
+        logging.info("Gathering available moves for each color")
+        for location in self.game.all_squares():
+            current_square = self.game.board.text_to_square(location)
+            for piece in pieces:
+                if piece in current_square.threats.keys():
+                    possible_moves[(piece, location)] = 0
+            for opponent_piece in opponent_pieces:
+                if opponent_piece in current_square.threats.keys():
+                    opponent_moves[(opponent_piece, location)] = 0
+
+        logging.info("Evaluating material") 
+        for source, destination in possible_moves:
+            source_value = self.game.get_piece_value(self.game.board.text_to_square(source).piece)
+            dest_value = self.game.get_piece_value(self.game.board.text_to_square(destination).piece)
+            diff = dest_value - source_value
+            if diff > 0 and dest_value > 0:
+                logging.info("AI taking higher value piece")
+                self.perform_ai_move(source, destination)
+                return
+            elif diff == 0 and dest_value > 0:
+                logging.info("AI Performing material exchange")
+                self.perform_ai_move(source, destination)
+                return
+
+            possible_moves[(source, destination)] = diff
+
+        for source, destination in opponent_moves:
+            source_value = self.game.get_piece_value(self.game.board.text_to_square(source).piece)
+            dest_value = self.game.get_piece_value(self.game.board.text_to_square(destination).piece)
+            diff = dest_value - source_value
+            opponent_moves[(source, destination)] = diff
+
+        import pdb
+        #pdb.set_trace()
+        # Evaluate the existing threat matrix
+        # Am I in check?
+        if color == 'black' and self.game.player2.in_check:
+            # I'm in check!!!
+            logging.info("%s AI player is in check", color)
+            #pdb.set_trace()
+        elif color == 'white' and self.game.player1.in_check:
+            # I'm in check!!!
+            logging.info("%s AI player is in check", color)
+
+        # Are any of my pieces threatened?
+        # pump ML model
+        # generate move
+        # if all else fails just select the first available
+        global move_index
+        move_index = 0
+        for key in possible_moves.keys():
+           try:
+               logging.info("Move index: %s", move_index)
+               source, destination = possible_moves.keys()[move_index]
+               self.perform_ai_move(source, destination)
+               move_index = 0
+           except InvalidMoveException as e:
+               pdb.set_trace()
+               logging.error("AI attempted invalid move: %s", e.message)
+               move_index += 1
+               continue
+
+    def perform_ai_move(self, source, destination):
+        self.click_event(Event(click_map[source]['x'], click_map[source]['y']))
+        self.click_event(Event(click_map[destination]['x'], click_map[destination]['y']))
+        self.window.title("Chess")
+
+
+class Event(object):
+
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--movelistfile')
     parser.add_argument('--movelistsleep', default=1)
+    parser.add_argument('--white_ai', action='store_true', default=False)
+    parser.add_argument('--black_ai', action='store_true', default=False)
     args = parser.parse_args()
-    GameLoop(args.movelistfile, args.movelistsleep)
+    if args.movelistfile:
+        if args.white_ai or args.black_ai:
+            raise InvalidArgumentsException("Cannot use move list file with AI")
+
+    GameLoop(args.movelistfile, args.movelistsleep, white_ai=args.white_ai, black_ai=args.black_ai)
