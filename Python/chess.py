@@ -360,14 +360,11 @@ class GameLoop(object):
             diff = dest_value - source_value
             opponent_moves[(source, destination)] = diff
 
-        import pdb
-        #pdb.set_trace()
         # Evaluate the existing threat matrix
         # Am I in check?
         if color == 'black' and self.game.player2.in_check:
             # I'm in check!!!
             logging.info("%s AI player is in check", color)
-            #pdb.set_trace()
         elif color == 'white' and self.game.player1.in_check:
             # I'm in check!!!
             logging.info("%s AI player is in check", color)
@@ -385,7 +382,6 @@ class GameLoop(object):
                self.perform_ai_move(source, destination)
                move_index = 0
            except InvalidMoveException as e:
-               pdb.set_trace()
                logging.error("AI attempted invalid move: %s", e.message)
                move_index += 1
                continue
