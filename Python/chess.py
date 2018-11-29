@@ -168,7 +168,7 @@ class Game(object):
                 if destination.piece.name() == "king":
                     if destination.piece.color == "white":
                         self.board.white_king = source_square
-                    if destination_piece.color == "black":
+                    if destination.piece.color == "black":
                         self.board.black_king = source_square
 
                 destination.piece = dest_bkp_piece
