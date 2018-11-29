@@ -258,7 +258,7 @@ class Pawn(Piece):
         # are we capturing diagonally
         if self.is_diagonal_move(s_x, s_y, d_x, d_y, board) and not self.destination_is_empty(d_x, d_y, board):
             if self.first_move:
-                if y_diff > 2 or y_diff < -2:
+                if y_diff >= 2 or y_diff <= -2:
                     return False
 
                 self.first_move = False

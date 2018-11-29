@@ -254,8 +254,6 @@ class GameLoop(object):
                 if self.game.player1.in_check or self.game.player2.in_check:
                     self.window.title("Chess - Check")
                 
-                return self.pump_ai_event()
-
     def move_script_event(self, event):
         logging.info("Attempting to execute move script")
         with open(self.movelistfile) as moves:
@@ -297,7 +295,7 @@ class GameLoop(object):
         self.panel.bind('<Button-1>', self.click_event)
         self.panel.bind('<Button-3>', self.move_script_event)
         self.panel.pack(side = "bottom", fill = "both", expand = "yes")
-        if self.white_ai:
+        if self.white_ai or self.black_ai:
             self.window.after(500, self.pump_ai_event)
 
         self.window.mainloop()
@@ -311,6 +309,7 @@ class GameLoop(object):
             self.evaluate_ai_moves('white')
         else:
             pass
+        self.window.after(100, self.pump_ai_event)
 
     def evaluate_ai_moves(self, color):
         logging.info("Starting AI move generation")
