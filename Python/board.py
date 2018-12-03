@@ -1,3 +1,4 @@
+import logging
 from piece import Pawn, Rook, Knight, Bishop, Queen, King, Piece
 from chess_exceptions import InvalidMoveException
 
@@ -177,6 +178,7 @@ class Board(object):
         y = int(y)
         x_red = int((x - 50) / 74) + 1
         y_red = self.y_transform(int((y + 50) / 74))
+        logging.debug("Converting point to square {} {}".format(x_red, y_red))
         return self.text_to_square("%s%s" % (self.convert_x_axis_to_letter(x_red), y_red))
 
     def convert_square_to_point(self, square):
@@ -202,6 +204,7 @@ class Board(object):
         y_interval = self.get_interval(s_y, d_y)
         x_pos = s_x
         y_pos = s_y
+        logging.debug("Converting x axis from position to letter {} {} ".format(x_pos, y_pos))
         if x_interval == 0:
             while y_pos != d_y:
                 x_pos = x_pos + x_interval

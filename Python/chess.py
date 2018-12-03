@@ -5,7 +5,9 @@ import logging
 import os
 import re
 import time
+from random import random
 from tkinter import Label, Tk
+from piece import Pawn
 from board import Board
 from piece import Piece
 from chess_exceptions import InvalidMoveException, InvalidArgumentsException
@@ -64,6 +66,10 @@ class Game(object):
 
     def update_threats(self):
         self.clear_threats()
+        logging.info("white material score: %s", self.white_material_score)
+        logging.info("black material score: %s", self.black_material_score)
+        logging.info("white position score: %s", self.white_position_score)
+        logging.info("black position score: %s", self.black_position_score)
         self.white_material_score = 0
         self.black_material_score = 0
         self.white_position_score = 0
@@ -111,9 +117,6 @@ class Game(object):
             square.threats = dict()
 
     def move(self, source_square, destination_square, updating_threats=False, keep_turn=False):
-        player1_already_in_check = self.player1.in_check
-        player2_already_in_check = self.player2.in_check
-
         if source_square == destination_square:
             raise InvalidMoveException("Source square is equal to Destination square")
 
@@ -139,9 +142,9 @@ class Game(object):
 
         path = self.board.path(source_square, destination_square)
         if not updating_threats:
-            logging.info("%s %s\n%s\n%s" % (source_square, destination_square, self.board, map(lambda x: x.coords, path)))
-            logging.info("Black king: %s White King: %s" % (self.board.black_king, self.board.white_king))
-            logging.info("Source piece is: %s" % piece_name)
+            logging.debug("%s %s\n%s\n%s" % (source_square, destination_square, self.board, map(lambda x: x.coords, path)))
+            logging.debug("Black king: %s White King: %s" % (self.board.black_king, self.board.white_king))
+            logging.debug("Source piece is: %s" % piece_name)
 
         if piece_name != "knight" and len(path) > 2 and piece_name != "king":
             for square in path[1:-1]:
@@ -226,7 +229,7 @@ class GameLoop(object):
         if self.first_click:
             self.first_click_x = event.x
             self.first_click_y = event.y
-            logging.info("Click location x:{} - y:{}".format(event.x, event.y))
+            logging.info("First click location x:{} - y:{}".format(event.x, event.y))
             square = self.game.board.convert_point_to_square(self.first_click_x, self.first_click_y) 
             if square.piece.image is not None:
                 square.piece.image = ImageOps.crop(square.piece.image, border=3)
@@ -296,9 +299,16 @@ class GameLoop(object):
         self.panel.bind('<Button-3>', self.move_script_event)
         self.panel.pack(side = "bottom", fill = "both", expand = "yes")
         if self.white_ai or self.black_ai:
-            self.window.after(500, self.pump_ai_event)
+            self.window.after(50, self.pump_ai_event)
 
         self.window.mainloop()
+
+    def square_has_opposing_color_threat(self, square, color):
+        for threat in square.threats.keys():
+            if self.game.board.text_to_square(threat).piece.color != color:
+                return True
+
+        return False
 
     def pump_ai_event(self):
         self.window.title("Chess - AI Processing")
@@ -309,7 +319,7 @@ class GameLoop(object):
             self.evaluate_ai_moves('white')
         else:
             pass
-        self.window.after(100, self.pump_ai_event)
+        self.window.after(50, self.pump_ai_event)
 
     def evaluate_ai_moves(self, color):
         logging.info("Starting AI move generation")
@@ -332,9 +342,31 @@ class GameLoop(object):
             current_square = self.game.board.text_to_square(location)
             for piece in pieces:
                 if piece in current_square.threats.keys():
+                    piece_square = self.game.board.text_to_square(piece)
+                    if piece_square.piece.name() == "pawn":
+                        s_x, s_y, d_x, d_y = self.game.board.get_coords(piece, current_square.coords)
+                        if Pawn(piece_square.piece.color).is_diagonal_move(s_x, s_y, d_x, d_y, self.game.board) and current_square.piece.name() == ' ':
+                            y_diff = d_y - s_y
+                            if y_diff == 1 or y_diff == -1:
+                                continue
+                    elif piece_square.piece.name() == "king":
+                        if self.square_has_opposing_color_threat(current_square, piece_square.piece.color):
+                            continue
+
                     possible_moves[(piece, location)] = 0
             for opponent_piece in opponent_pieces:
                 if opponent_piece in current_square.threats.keys():
+                    piece_square = self.game.board.text_to_square(opponent_piece)
+                    if piece_square.piece.name() == "pawn":
+                        s_x, s_y, d_x, d_y = self.game.board.get_coords(piece, current_square.coords)
+                        if Pawn(piece_square.piece.color).is_diagonal_move(s_x, s_y, d_x, d_y, self.game.board) and current_square.piece.name() == ' ':
+                            y_diff = d_y - s_y
+                            if y_diff == 1 or y_diff == -1:
+                                continue
+                    elif piece_square.piece.name() == "king":
+                        if self.square_has_opposing_color_threat(current_square, piece_square.piece.color):
+                            continue
+
                     opponent_moves[(opponent_piece, location)] = 0
 
         logging.info("Evaluating material") 
@@ -372,17 +404,14 @@ class GameLoop(object):
         # pump ML model
         # generate move
         # if all else fails just select the first available
-        global move_index
-        move_index = 0
-        for key in possible_moves.keys():
+        move_locations = possible_moves.keys()
+        for key in move_locations:
            try:
-               logging.info("Move index: %s", move_index)
-               source, destination = possible_moves.keys()[move_index]
+               move_index = int(len(move_locations) * random())
+               source, destination = move_locations[move_index]
                self.perform_ai_move(source, destination)
-               move_index = 0
            except InvalidMoveException as e:
                logging.error("AI attempted invalid move: %s", e.message)
-               move_index += 1
                continue
 
     def perform_ai_move(self, source, destination):
