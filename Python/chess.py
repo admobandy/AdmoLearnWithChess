@@ -1,4 +1,5 @@
 import argparse
+import copy
 import cv2
 import json
 import logging
@@ -39,6 +40,10 @@ class Game(object):
         self.black_material_score = 0
         self.white_position_score = 0
         self.black_position_score = 0
+        self.move_list = []
+        self.game_is_draw = False
+        self.black_is_mated = False
+        self.white_is_mated = False
 
     def all_squares(self):
         squares = []
@@ -74,6 +79,7 @@ class Game(object):
         self.black_material_score = 0
         self.white_position_score = 0
         self.black_position_score = 0
+        logging.info("Move counter: %s", self.move_counter)
         # Create threat matrix
         # Evaluate material scores
         for source in self.all_squares():
@@ -106,6 +112,9 @@ class Game(object):
 
                 except InvalidMoveException:
                     pass
+
+        if self.white_material_score == 10 and self.black_material_score == 10:
+            self.game_is_draw = True
 
     def clear_threats(self):
         self.board.text_to_square(self.board.white_king).piece.in_check = False
@@ -152,8 +161,11 @@ class Game(object):
                     raise InvalidMoveException("Square is not empty")
 
         if updating_threats:
+            #board_copy = copy.deepcopy(self)
+            #threat_try_status = board_copy.move(source_square, destination_square)
             self.board.text_to_square(destination_square).threats[source_square] = self.move_counter
-            return True
+            return True 
+            #return threat_try_status
         else:
             dest_bkp_piece = destination.piece
             source_bkp_piece = source.piece
@@ -208,6 +220,12 @@ class Game(object):
 
         self.move_counter += 1
         self.update_threats()
+        self.move_list.append("{}:{}".format(source_square, destination_square))
+        logging.info("Current move list: %s", self.move_list)
+        if len(self.move_list) >= 6:
+            last_6_moves = self.move_list[-6:]
+            if last_6_moves[:2] == last_6_moves[-2:] and last_6_moves[:2] == last_6_moves[2:-2]:
+                self.game_is_draw = True
 
 
 class GameLoop(object):
@@ -248,14 +266,17 @@ class GameLoop(object):
                 logging.info(e.message)
                 self.window.title("Chess - Invalid Move")
             finally:
+                if self.game.player1.in_check or self.game.player2.in_check:
+                    self.window.title("Chess - Check")
+                elif self.game.game_is_draw:
+                    self.window.title("Chess - Draw")
+
                 frame = self.get_frame()
                 self.panel.configure(image = frame)
                 self.panel.image = frame
                 source.piece.image = source.piece.get_image()
                 destination.piece.image = destination.piece.get_image()
                 self.first_click = True
-                if self.game.player1.in_check or self.game.player2.in_check:
-                    self.window.title("Chess - Check")
                 
     def move_script_event(self, event):
         logging.info("Attempting to execute move script")
@@ -299,7 +320,7 @@ class GameLoop(object):
         self.panel.bind('<Button-3>', self.move_script_event)
         self.panel.pack(side = "bottom", fill = "both", expand = "yes")
         if self.white_ai or self.black_ai:
-            self.window.after(50, self.pump_ai_event)
+            self.window.after(1, self.pump_ai_event)
 
         self.window.mainloop()
 
@@ -319,10 +340,14 @@ class GameLoop(object):
             self.evaluate_ai_moves('white')
         else:
             pass
-        self.window.after(50, self.pump_ai_event)
+
+        if not self.game.game_is_draw and not self.game.black_is_mated and not self.game.white_is_mated:
+            self.window.update()
+            self.window.after(1, self.pump_ai_event)
 
     def evaluate_ai_moves(self, color):
         logging.info("Starting AI move generation")
+        # TODO: Add castling to list of possible moves for AI
         # Get a list of valid moves for this color
         self.game.update_threats()
         pieces = []
@@ -369,22 +394,6 @@ class GameLoop(object):
 
                     opponent_moves[(opponent_piece, location)] = 0
 
-        logging.info("Evaluating material") 
-        for source, destination in possible_moves:
-            source_value = self.game.get_piece_value(self.game.board.text_to_square(source).piece)
-            dest_value = self.game.get_piece_value(self.game.board.text_to_square(destination).piece)
-            diff = dest_value - source_value
-            if diff > 0 and dest_value > 0:
-                logging.info("AI taking higher value piece")
-                self.perform_ai_move(source, destination)
-                return
-            elif diff == 0 and dest_value > 0:
-                logging.info("AI Performing material exchange")
-                self.perform_ai_move(source, destination)
-                return
-
-            possible_moves[(source, destination)] = diff
-
         for source, destination in opponent_moves:
             source_value = self.game.get_piece_value(self.game.board.text_to_square(source).piece)
             dest_value = self.game.get_piece_value(self.game.board.text_to_square(destination).piece)
@@ -396,23 +405,33 @@ class GameLoop(object):
         if color == 'black' and self.game.player2.in_check:
             # I'm in check!!!
             logging.info("%s AI player is in check", color)
+            logging.info("Possible moves: %s", possible_moves)
+            import pdb
+            pdb.set_trace()
         elif color == 'white' and self.game.player1.in_check:
             # I'm in check!!!
             logging.info("%s AI player is in check", color)
+            logging.info("Possible moves: %s", possible_moves)
+            import pdb
+            pdb.set_trace()
 
         # Are any of my pieces threatened?
         # pump ML model
         # generate move
-        # if all else fails just select the first available
+        # if all else fails just select random available
         move_locations = possible_moves.keys()
+        possible_move_count = int(len(move_locations))
+        logging.info("Possible moves for {}: {}".format(color, possible_move_count))
         for key in move_locations:
-           try:
-               move_index = int(len(move_locations) * random())
-               source, destination = move_locations[move_index]
-               self.perform_ai_move(source, destination)
-           except InvalidMoveException as e:
-               logging.error("AI attempted invalid move: %s", e.message)
-               continue
+            try:
+                move_index = int(len(move_locations) * random())
+                source, destination = move_locations[move_index]
+                self.perform_ai_move(source, destination)
+                break
+            except InvalidMoveException as e:
+                move_locations.remove(key)
+                logging.error("AI attempted invalid move: %s", e.message)
+                continue
 
     def perform_ai_move(self, source, destination):
         self.click_event(Event(click_map[source]['x'], click_map[source]['y']))

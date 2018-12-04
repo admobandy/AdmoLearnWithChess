@@ -101,7 +101,7 @@ class Piece(object):
         return False
 
     def destination_is_empty(self, d_x, d_y, board):
-        logging.info("Checking if destination is empty for {} {}".format(d_x, d_y))
+        logging.debug("Checking if destination is empty for {} {}".format(d_x, d_y))
         location = "%s%s" % (board.convert_x_axis_to_letter(d_x), d_y)
         location = board.text_to_square(location)
         if location.piece.name() == ' ':
@@ -118,7 +118,7 @@ class Piece(object):
 
         y_diff = d_y - s_y
         diagonal = self.is_diagonal_move(s_x, s_y, d_x, d_y, board)
-        logging.info("Checking pawn en passant {} {}".format(d_x, d_y))
+        logging.debug("Checking pawn en passant {} {}".format(d_x, d_y))
         capture = "%s%s" % (board.convert_x_axis_to_letter(d_x), d_y - y_diff)
         capture = board.text_to_square(capture)
         if diagonal and self.destination_is_empty(d_x, d_y, board) and capture.piece.name() == "pawn":
@@ -239,7 +239,7 @@ class Pawn(Piece):
 
     def valid_move(self, s, d, board, game, updating_threats):
         valid = self._valid_move(s, d, board, game, updating_threats)
-        logging.info("Pawn debug, move is valid: %s", valid)
+        logging.debug("pawn debug, move is valid: %s", valid)
         if not updating_threats:
             if self.is_pawn_upgrade(s, d, board):
                 # TODO: Handle piece upgrade with more than auto-queen
@@ -278,7 +278,7 @@ class Pawn(Piece):
             if board.text_to_square(d).piece.name() == ' ':
                 return True
             else:
-                logging.info("pawn debug, illegal move, forward square is not empty ")
+                logging.debug("pawn debug, illegal move, forward square is not empty ")
                 return False
 
         # are we capturing diagonally
@@ -303,7 +303,7 @@ class Pawn(Piece):
         if self.is_en_passant(s_x, s_y, d_x, d_y, board, updating_threats):
             return True
 
-        logging.info("pawn debug, illegal move, We've fallen all the way through our checks")  
+        logging.debug("pawn debug, illegal move, We've fallen all the way through our checks")  
         return False
 
 class Rook(Piece):
